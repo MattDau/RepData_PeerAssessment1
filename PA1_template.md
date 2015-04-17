@@ -13,18 +13,28 @@ The purpose of the assignment is to analyze data from a personal activity monito
 
 First we will set the global parameters for the assignment and read the data set used.
 
-```{r}
+
+```r
 library(RCurl)
 temp = tempfile()
 sourcedata <- getBinaryURL("https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip", ssl.verifypeer = FALSE)
 write(sourcedata, file = temp)
 unzip(temp, "activity.csv")
+```
+
+```
+## Warning in unzip(temp, "activity.csv"): error 1 in extracting from zip
+## file
+```
+
+```r
 data = read.csv("activity.csv")
 ```
 
 Next we will look at the total number of steps taken by day.
 
-```{r}
+
+```r
 gooddata = na.omit(data)
 daymeans = aggregate(gooddata$steps, by = list(gooddata$date)
                      , FUN = sum, na.rm = T)
@@ -35,16 +45,31 @@ hist(daymeans$steps, breaks = length(daymeans$steps)
      , xlab = "Steps")
 ```
 
+![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2-1.png) 
+
 We can use this to determine the mean and median daily steps
  
-```{r} 
+
+```r
 mean(daymeans$steps)
+```
+
+```
+## [1] 10766.19
+```
+
+```r
 median(daymeans$steps)
+```
+
+```
+## [1] 10765
 ```
 
 Next we will look at the average pattern over a day by plotting the mean of all days for each five-minute interval
 
-```{r}
+
+```r
 timemeans = aggregate(gooddata$steps, by = list(gooddata$interval)
                       , FUN = mean, ra.rm = T)
 names(timemeans) = c("time", "steps")
@@ -56,15 +81,23 @@ with(timemeans, plot(time.decimal, steps, type = "l"
                      , xlab = "Hour of Day"))
 ```
 
+![plot of chunk unnamed-chunk-4](figure/unnamed-chunk-4-1.png) 
+
 We can use this to determine what hour of the day contains the most steps on average, which we can see is at 8:35 AM.
 
-```{r}
+
+```r
 timemeans$time[which(timemeans$steps == max(timemeans$steps))]
+```
+
+```
+## [1] 835
 ```
 
 Next we will devise a method of imputing a reasonable value of steps for dates and times that have missing values.  We will calculate an "index" for each date and time that represents the average at that date or time divided by the overall average.  We can then use that to estimate what the number of steps would be at a particular date and time.
 
-```{r}
+
+```r
 daymeans$index = daymeans$steps/mean(daymeans$steps)
 timemeans$index = timemeans$steps/mean(timemeans$steps)
 baddata = data[is.na(data$steps),]
@@ -83,7 +116,8 @@ fulldata = rbind(gooddata, baddata)
 
 Using this new, complete, data set we will again construct a histogram of total steps taken per day
 
-```{r}
+
+```r
 fulldaymeans = aggregate(fulldata$steps, by = list(fulldata$date)
                      , FUN = sum, na.rm = T)
 names(fulldaymeans) = c("date","steps")
@@ -93,18 +127,33 @@ hist(fulldaymeans$steps, breaks = length(fulldaymeans$steps)
      , xlab = "Steps")
 ```
 
+![plot of chunk unnamed-chunk-7](figure/unnamed-chunk-7-1.png) 
+
 We will again compute the mean and median values to see if adding imputed data changes the results.
 
-```{r}
+
+```r
 mean(fulldaymeans$steps)
+```
+
+```
+## [1] 10766.19
+```
+
+```r
 median(fulldaymeans$steps)
+```
+
+```
+## [1] 10766.19
 ```
 
 As you can see there is no change in mean value of steps.  However, there is a very slight change in the median value.
 
 In order to compare the daily patterns of weekdays and weekends, we will create a new factor variable to identify the two groups and plot a line chart for each.
 
-```{r}
+
+```r
 fulldata$weekday = weekdays(as.Date(fulldata$date))
 weekenddata = subset(fulldata, weekday %in% c("Saturday","Sunday"))
 weekdaydata = subset(fulldata, weekday %in% c("Monday","Tuesday","Wednesday"
@@ -129,6 +178,8 @@ with(weekendtimemeans, plot(time.decimal, steps, type = "l", ylim = c(0,250)
                      , main = "Average Steps by Time of Day - Weekends"
                      , xlab = "Hour of Day"))
 ```
+
+![plot of chunk unnamed-chunk-9](figure/unnamed-chunk-9-1.png) 
 
 As you can see there are some differences in the daily patterns of steps.  On weekends the number does not ramp up as early as it does on weekdays, and it is more spread out throughout the day.
 
